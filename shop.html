@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buy Product</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+    <h1>Buy Product</h1>
+    <form id="payment-form" action="process_payment.php" method="post">
+        <div>
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" required>
+        </div>
+        <div>
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required>
+        </div>
+        <div>
+            <label for="card-element">Credit or Debit Card:</label>
+            <div id="card-element"><!-- A Stripe Element will be inserted here. --></div>
+            <div id="card-errors" role="alert"></div>
+        </div>
+        <button type="submit">Buy Product</button>
+    </form>
+
+    <script>
+        const stripe = Stripe('YOUR_PUBLIC_STRIPE_KEY'); // Replace with your Stripe public key
+        const elements = stripe.elements();
+        
+        const cardElement = elements.create('card');
+        cardElement.mount('#card-element');
+
+        const form = document.getElementById('payment-form');
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const { paymentMethod, error } = await stripe.createPaymentMethod({
+                type: 'card',
+                card: cardElement,
+                billing_details: {
+                    name: document.getElementById('name').value,
+                    email: document.getElementById('email').value,
+                },
+            });
+
+            if (error) {
+                // Display error.message in your UI.
+                document.getElementById('card-errors').textContent = error.message;
+            } else {
+                // Submit the form with the payment method ID
+                const hiddenInput = document.createElement('input');
+                hiddenInput.setAttribute('type', 'hidden');
+                hiddenInput.setAttribute('name', 'payment_method_id');
+                hiddenInput.setAttribute('value', paymentMethod.id);
+                form.appendChild(hiddenInput);
+                form.submit();
+            }
+        });
+    </script>
+</body>
+</html>
